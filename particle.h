@@ -26,16 +26,20 @@ class Particle {
 public:
     vec2<Real> position;
     vec2<Real> velocity;
+    mat2<Real> C;
+    Real J;
 
-    Particle(vec2<Real> &position, vec2<Real> &velocity) : position(position), velocity(velocity) {}
+    Particle(vec2<Real> &position, vec2<Real> &velocity, mat2<Real> &C)
+            : position(position), velocity(velocity), J(1.0) {
+        C = mat2<Real>();
+    }
 
     Particle() {
-        position[0] = random<Real>(0.2, 0.8);
-        position[1] = random<Real>(0.2, 0.8);
-        velocity[0] = random<Real>(-0.8, 0.8);
-        velocity[1] = random<Real>(-0.8, 0.8);
-//        velocity[0] = 1.0;
-//        velocity[1] = 0.0;
+        position[0] = random<Real>(0.1, 0.6); // x
+        position[1] = random<Real>(0.4, 0.7); // y
+        velocity = vec2<Real>{-3, -3};
+        J = 1;
+        C = mat2<Real>();
     }
 };
 

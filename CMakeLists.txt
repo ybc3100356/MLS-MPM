@@ -2,14 +2,15 @@ cmake_minimum_required(VERSION 3.19)
 project(mls-mpm)
 
 set(CMAKE_CXX_STANDARD 14)
+find_package(glfw3 3.3 REQUIRED)
 
-find_package(OpenCV REQUIRED)
-# directory of opencv headers
-include_directories(${OpenCV_INCLUDE_DIRS})
-# name of executable file and path of source file
-add_executable(mls-mpm main.cpp)
+file(GLOB SOURCES
+        ${PROJECT_SOURCE_DIR}/src/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/*.c
+        ${PROJECT_SOURCE_DIR}/src/shader/*.cpp
+        )
 
-# directory of opencv library
-link_directories(${OpenCV_LIBRARY_DIRS})
-# opencv libraries
-target_link_libraries(mls-mpm ${OpenCV_LIBS})
+add_executable(mls-mpm ${SOURCES})
+
+target_include_directories(mls-mpm PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(mls-mpm glfw)

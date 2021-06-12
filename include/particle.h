@@ -20,28 +20,16 @@ Numeric random(Numeric from, Numeric to) {
     return dist(gen, typename dist_type::param_type{from, to});
 }
 
-using Real = double;
+using Real = float;
 
 class Particle {
 public:
-    vec2<Real> position;
-    vec2<Real> velocity;
-    mat2<Real> C;
+    vec2 position;
+    vec2 velocity;
+    mat2 C;
     Real J;
 
-    Particle(vec2<Real> &position, vec2<Real> &velocity, mat2<Real> &C)
-            : position(position), velocity(velocity), J(1.0) {
-        C = mat2<Real>();
-    }
-
-    Particle() {
-        position[0] = random<Real>(0.1, 0.6); // x
-        position[1] = random<Real>(0.4, 0.7); // y
-        velocity = vec2<Real>{-3, -3};
-        J = 1;
-        C = mat2<Real>();
-    }
+    Particle();
 };
-
 
 #endif //MLSMPM_PARTICLE_H

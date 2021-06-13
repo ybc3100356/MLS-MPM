@@ -24,9 +24,9 @@ using Real = float;
 
 class Particle {
 public:
-    vec2 position;
-    vec2 velocity;
-    mat2 C;
+    vec3 position;
+    vec3 velocity;
+    mat3 C;
     Real J;
 
     Particle();

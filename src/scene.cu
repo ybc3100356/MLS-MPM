@@ -4,11 +4,15 @@
 
 #include "scene.h"
 #include <cassert>
+#include <cuda_runtime_api.h>
+#include <cuda.h>
+#include <cooperative_groups.h>
 
 void Scene::update() {
     gpuUpdate();
 }
 
+const int blockNum = 1;
 const int threadNum = 128;
 
 __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
@@ -25,11 +29,11 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
         __syncthreads();
 
         // p2g
-        assert(Scene::numParticles % threadNum == 0);
-        int pgRepeatTime = Scene::numParticles / threadNum;
+        const int totalThreadNum = threadNum * blockNum;
+        assert(Scene::numParticles % totalThreadNum == 0);
+        int pgRepeatTime = Scene::numParticles / totalThreadNum;
         for (int i = 0; i < pgRepeatTime; i++) {
-            size_t idx = threadIdx.x * pgRepeatTime + i;
-//            printf("%d\n", int(idx));
+            size_t idx = (threadIdx.x + blockIdx.x * blockDim.x) * pgRepeatTime + i;
             auto base = (ivec2) (particles[idx].position * Scene::inv_dx - 0.5f);
             auto fx = (particles[idx].position * Scene::inv_dx) - (vec2) base;
             // quadratic B-spline weights
@@ -44,6 +48,7 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
                     auto dpos = ((vec2) offset - fx) * Scene::dx;
                     auto weight = w[i][0] * w[j][1];
                     auto index = base + offset;
+//                    assert (index[0] < Scene::numGrid && index[1] < Scene::numGrid);
                     if (!(index[0] < Scene::numGrid && index[1] < Scene::numGrid)) continue;
                     grid_v[index[0] * Scene::numGrid + index[1]] += weight * (Scene::p_mass * particles[idx].velocity + affine * dpos);
                     grid_m[index[0] * Scene::numGrid + index[1]] += weight * Scene::p_mass;
@@ -53,10 +58,10 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
         __syncthreads();
 
         // grid
-        assert((Scene::numGrid * Scene::numGrid) % threadNum == 0);
-        int gridRepeatTime = (Scene::numGrid * Scene::numGrid) / threadNum;
+        assert((Scene::numGrid * Scene::numGrid) % totalThreadNum == 0);
+        int gridRepeatTime = (Scene::numGrid * Scene::numGrid) / totalThreadNum;
         for (int i = 0; i < gridRepeatTime; i++) {
-            size_t idx = threadIdx.x * gridRepeatTime + i;
+            size_t idx = (threadIdx.x + blockIdx.x * blockDim.x) * gridRepeatTime + i;
             if (grid_m[idx] > 0) {
                 auto inv_m = 1.0f / grid_m[idx];
                 grid_v[idx] = inv_m * grid_v[idx];
@@ -78,7 +83,7 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
 
         // g2p
         for (int i = 0; i < pgRepeatTime; i++) {
-            size_t idx = threadIdx.x * pgRepeatTime + i;
+            size_t idx = (threadIdx.x + blockIdx.x * blockDim.x) * pgRepeatTime + i;
             auto base = (ivec2) (particles[idx].position * Scene::inv_dx - 0.5f);
             auto fx = (particles[idx].position * Scene::inv_dx) - (vec2) base;
             // quadratic B-spline weights
@@ -127,7 +132,7 @@ void Scene::gpuFree() {
 
 void Scene::gpuUpdate() {
     cudaMemcpy(particles_gpu, &particles[0], particles_size, cudaMemcpyHostToDevice);
-    gpuCompute<<<1, threadNum>>>(particles_gpu, grid_v_gpu, grid_m_gpu);
+    gpuCompute<<<blockNum, threadNum>>>(particles_gpu, grid_v_gpu, grid_m_gpu);
     cudaError_t code = cudaPeekAtLastError();
     if (code != cudaSuccess) {
         fprintf(stderr,"GPU assert: %s %s %d\n", cudaGetErrorString(code), __FILE__, __LINE__);

@@ -47,8 +47,8 @@ int main() {
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
+//    glfwSetCursorPosCallback(window, mouse_callback);
+//    glfwSetScrollCallback(window, scroll_callback);
 
     // glad: load all OpenGL function pointers
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
@@ -69,7 +69,7 @@ int main() {
         lastFrame = currentFrame;
         glfwPollEvents();
 
-        scene.processInput(window, deltaTime);
+//        scene.processInput(window, deltaTime);
         scene.update();
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);

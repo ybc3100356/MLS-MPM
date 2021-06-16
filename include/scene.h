@@ -5,11 +5,6 @@
 #ifndef MLS_MPM_SCENE_H
 #define MLS_MPM_SCENE_H
 
-#ifdef __CUDACC__
-#define CUDA_HOST_DEV __global__
-#else
-#define CUDA_HOST_DEV
-#endif
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -30,31 +25,35 @@ public:
         return instance;
     }
 
+    static const size_t dim = 3;
+    static const size_t numParticles = 1024;
+    static const size_t numGrid = 128;
+
+    constexpr static const Real dt = 2.0e-4;
+    constexpr static const Real dx = 1.0f / numGrid;
+    constexpr static const Real inv_dx = 1.0f / dx;
+    constexpr static const Real p_vol = (dx * 0.3f) * (dx * 0.3f);
+    constexpr static const Real p_rho = 0.3;
+    constexpr static const Real p_mass = p_vol * p_rho;
+    constexpr static const Real E = 100;
+
+    constexpr const static int grid_v_size = numGrid * numGrid * numGrid * sizeof(vec3);
+    constexpr const static int grid_m_size = numGrid * numGrid * numGrid * sizeof(Real);
+
 private:
     // shader
     unsigned int VAO;
     Shader shader;
 
-    const size_t dim = 3;
-    const size_t numParticles = 8192 * 4;
-    const size_t numGrid = 128;
-
-    const Real dt = 2.0e-4;
-    const Real dx = 1.0f / numGrid;
-    const Real inv_dx = 1.0f / dx;
-    const Real p_vol = (dx * 0.3f) * (dx * 0.3f);
-    const Real p_rho = 0.3;
-    const Real p_mass = p_vol * p_rho;
-    const Real E = 100;
-
-private:
     vector<Particle> particles;
-    Particle *particles_gpu;
+    Particle *particles_gpu{};
     constexpr const static int particles_size = numParticles * sizeof(Particle);
 
     vector<vector<vector<vec3> > > grid_v;
+    vec3 *grid_v_gpu{};
 
     vector<vector<vector<Real> > > grid_m;
+    Real *grid_m_gpu{};
 
     Scene();
 
@@ -71,15 +70,30 @@ public:
 
     void processInput(GLFWwindow *window, double deltaTime);
 
-    void processMouseMovement(float xoffset, float yoffset);
+    void processMouseMovement(float xOffset, float yOffset);
 
-    void processMouseScroll(float yoffset);
+    void processMouseScroll(float yOffset);
 
     void update();
 
     void render();
 
     void loadShader(const GLchar *vertexPath, const GLchar *fragmentPath);
+
+private:
+    // gpu related
+    void gpuInit();
+
+    void gpuFree();
+
+    void gpuUpdate();
+
+    // computing related
+    void p2g();
+
+    void g2p();
+
+    void gridCompute();
 };
 
 

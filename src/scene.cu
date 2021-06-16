@@ -6,8 +6,8 @@
 #include <cassert>
 #include <cooperative_groups.h>
 
-const int numBlock = 8;
-const int numThread = 128;
+const int numBlock = 128;
+const int numThread = 4;
 
 __global__ void gpuCompute(Particle *particles, vec3 *grid_v, Real *grid_m) {
     cooperative_groups::grid_group grid = cooperative_groups::this_grid();
@@ -47,10 +47,16 @@ __global__ void gpuCompute(Particle *particles, vec3 *grid_v, Real *grid_m) {
                         if (!(index[0] < Scene::numGrid && index[1] < Scene::numGrid &&
                               index[2] < Scene::numGrid))
                             continue;
-                        grid_v[index[0] * Scene::numGrid * Scene::numGrid + index[1] * Scene::numGrid + index[2]] +=
-                                weight * (Scene::p_mass * particles[idx].velocity + affine * dpos);
-                        grid_m[index[0] * Scene::numGrid * Scene::numGrid + index[1] * Scene::numGrid + index[2]] +=
-                                weight * Scene::p_mass;
+                        auto dv = weight * (Scene::p_mass * particles[idx].velocity + affine * dpos);
+                        auto target_idx = index[0] * Scene::numGrid * Scene::numGrid + index[1] * Scene::numGrid + index[2];
+                        atomicAdd(&(grid_v[target_idx][0]), dv[0]);
+                        atomicAdd(&(grid_v[target_idx][1]), dv[1]);
+                        atomicAdd(&(grid_v[target_idx][2]), dv[2]);
+                        atomicAdd(&(grid_m[target_idx]), weight * Scene::p_mass);
+//                        grid_v[index[0] * Scene::numGrid * Scene::numGrid + index[1] * Scene::numGrid + index[2]] +=
+//                                weight * (Scene::p_mass * particles[idx].velocity + affine * dpos);
+//                        grid_m[index[0] * Scene::numGrid * Scene::numGrid + index[1] * Scene::numGrid + index[2]] +=
+//                                weight * Scene::p_mass;
                     }
                 }
             }
@@ -62,22 +68,6 @@ __global__ void gpuCompute(Particle *particles, vec3 *grid_v, Real *grid_m) {
         int gridRepeatTime = int((Scene::numGrid * Scene::numGrid * Scene::numGrid) / totalThreadNum);
         for (int i = 0; i < gridRepeatTime; i++) {
             size_t idx = threadId * gridRepeatTime + i;
-//            if (grid_m[idx] > 0) {
-//                auto inv_m = 1.0f / grid_m[idx];
-//                grid_v[idx] = inv_m * grid_v[idx];
-//                grid_v[idx][1] -= Scene::dt * 9.8;
-//                auto bound = 3;
-//                size_t i = idx / Scene::numGrid;
-//                size_t j = idx % Scene::numGrid;
-//                if (i < bound && grid_v[idx][0] < 0)
-//                    grid_v[idx][0] = 0;
-//                if (i > Scene::numGrid - bound && grid_v[idx][0] > 0)
-//                    grid_v[idx][0] = 0;
-//                if (j < bound && grid_v[idx][1] < 0)
-//                    grid_v[idx][1] = 0;
-//                if (j > Scene::numGrid - bound && grid_v[idx][1] > 0)
-//                    grid_v[idx][1] = 0;
-//            }
             if (grid_m[idx] > 0) {
                 auto inv_m = 1.0f / grid_m[idx];
                 grid_v[idx] = inv_m * grid_v[idx];

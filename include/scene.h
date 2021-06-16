@@ -5,6 +5,11 @@
 #ifndef MLS_MPM_SCENE_H
 #define MLS_MPM_SCENE_H
 
+#ifdef __CUDACC__
+#define CUDA_HOST_DEV __global__
+#else
+#define CUDA_HOST_DEV
+#endif
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -42,7 +47,10 @@ private:
     const Real p_mass = p_vol * p_rho;
     const Real E = 100;
 
+private:
     vector<Particle> particles;
+    Particle *particles_gpu;
+    constexpr const static int particles_size = numParticles * sizeof(Particle);
 
     vector<vector<vector<vec3> > > grid_v;
 

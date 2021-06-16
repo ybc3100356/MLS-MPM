@@ -26,8 +26,8 @@ public:
     }
 
     static const size_t dim = 3;
-    static const size_t numParticles = 1024;
-    static const size_t numGrid = 128;
+    static const size_t numParticles = 8192;
+    static const size_t numGrid = 32;
 
     constexpr static const Real dt = 2.0e-4;
     constexpr static const Real dx = 1.0f / numGrid;

@@ -6,7 +6,7 @@
 #define GL_SHADER_H
 
 #include <glad/glad.h>
-#include <glm/glm.hpp>
+#include "algebra.h"
 
 #include <string>
 #include <fstream>
@@ -17,15 +17,21 @@ class Shader {
 public:
     unsigned int programID;
 
+    Shader();
     Shader(const GLchar *vertexPath, const GLchar *fragmentPath);
-
     ~Shader() { if (programID) glDeleteProgram(programID); }
+
+    void load(const GLchar *vertexPath, const GLchar *fragmentPath);
 
     void use();
 
     void set(const std::string &name, const glm::vec2 &value) const;
 
-    void set(const std::string &name, const glm::vec4 &value) const;
+    void set(const std::string &name, const vec3 &value) const;
+
+    void set(const std::string &name, const vec4 &value) const;
+
+    void set(const std::string &name, const mat4 &value) const;
 
     void set(const std::string &name, bool value) const;
 

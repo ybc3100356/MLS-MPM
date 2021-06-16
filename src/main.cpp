@@ -4,16 +4,31 @@
 
 #include "scene.h"
 
-const unsigned int SCR_WIDTH = 1920;
-const unsigned int SCR_HEIGHT = 1080;
+bool firstMouse = true;
+float lastX = SCR_WIDTH / 2.0f, lastY = SCR_HEIGHT / 2.0f;
 
-static void processInput(GLFWwindow *window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
+    if (firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+    lastX = xpos;
+    lastY = ypos;
+
+    Scene::getInstance().processMouseMovement(xoffset, yoffset);
 }
 
 static void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
+}
+
+static void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
+    Scene::getInstance().processMouseScroll((float) yoffset);
 }
 
 int main() {
@@ -32,30 +47,34 @@ int main() {
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     // glad: load all OpenGL function pointers
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     double deltaTime = 0.0f;
     double lastFrame = 0.0f;
-    Shader shader = Shader("../src/shader/vertexShader.glsl", "../src/shader/fragmentShader.glsl");
-    Scene scene = Scene(shader);
+    Scene &scene = Scene::getInstance();
+    scene.loadShader("../src/shader/vertexShader.glsl", "../src/shader/fragmentShader.glsl");
+
+    glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(window)) {
         double currentFrame = glfwGetTime();
         deltaTime += currentFrame - lastFrame;
         lastFrame = currentFrame;
-
         glfwPollEvents();
-        processInput(window);
+
+        scene.processInput(window, deltaTime);
         scene.update();
-        if (deltaTime > scene.dt) {
-            deltaTime = 0;
-        }
+
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         scene.render();
         glfwSwapBuffers(window);
     }
@@ -64,3 +83,5 @@ int main() {
     std::cout << "finished" << std::endl;
     return 0;
 }
+
+

@@ -4,6 +4,7 @@ enable_language(CUDA)
 
 set(CMAKE_CXX_STANDARD 14)
 find_package(glfw3 3.3 REQUIRED)
+find_package(glm REQUIRED)
 
 file(GLOB SOURCES
         ${PROJECT_SOURCE_DIR}/src/*.cpp

@@ -4,8 +4,64 @@
 
 #include "shader.h"
 
-Shader::Shader(const GLchar *vertexPath, const GLchar *fragmentPath) : programID(0) {
-    // 1. retrieve the vertex/fragment source code from filePath
+Shader::Shader() : programID(0) {
+
+}
+
+void Shader::checkCompileErrors(unsigned int shader, std::string type) {
+    int success;
+    char infoLog[1024];
+    if (type != "PROGRAM") {
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+        if (!success) {
+            glGetShaderInfoLog(shader, 1024, NULL, infoLog);
+            std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n" << infoLog
+                      << "\n -- --------------------------------------------------- -- " << std::endl;
+        }
+    } else {
+        glGetProgramiv(shader, GL_LINK_STATUS, &success);
+        if (!success) {
+            glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+            std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog
+                      << "\n -- --------------------------------------------------- -- " << std::endl;
+        }
+    }
+}
+
+void Shader::use() {
+    glUseProgram(programID);
+}
+
+void Shader::set(const std::string &name, bool value) const {
+    glUniform1i(glGetUniformLocation(programID, name.c_str()), (int) value);
+}
+
+void Shader::set(const std::string &name, int value) const {
+    glUniform1i(glGetUniformLocation(programID, name.c_str()), value);
+}
+
+void Shader::set(const std::string &name, float value) const {
+    glUniform1f(glGetUniformLocation(programID, name.c_str()), value);
+}
+
+void Shader::set(const std::string &name, const glm::vec2 &value) const {
+    glUniform2f(glGetUniformLocation(programID, name.c_str()), value.x, value.y);
+}
+
+void Shader::set(const std::string &name, const vec3 &value) const {
+    glUniform3f(glGetUniformLocation(programID, name.c_str()), value.x, value.y, value.z);
+}
+
+void Shader::set(const std::string &name, const vec4 &value) const {
+    glUniform4f(glGetUniformLocation(programID, name.c_str()), value.x, value.y, value.z, value.w);
+}
+
+void Shader::set(const std::string &name, const mat4 &value) const {
+    glUniformMatrix4fv(glGetUniformLocation(programID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+}
+
+void Shader::load(const GLchar *vertexPath, const GLchar *fragmentPath) {
+// 1. retrieve the vertex/fragment source code from filePath
     std::string vertexCode;
     std::string fragmentCode;
     std::ifstream vShaderFile;
@@ -56,46 +112,6 @@ Shader::Shader(const GLchar *vertexPath, const GLchar *fragmentPath) : programID
     glDeleteShader(fragment);
 }
 
-void Shader::checkCompileErrors(unsigned int shader, std::string type) {
-    int success;
-    char infoLog[1024];
-    if (type != "PROGRAM") {
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-        if (!success) {
-            glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-            std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n" << infoLog
-                      << "\n -- --------------------------------------------------- -- " << std::endl;
-        }
-    } else {
-        glGetProgramiv(shader, GL_LINK_STATUS, &success);
-        if (!success) {
-            glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-            std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog
-                      << "\n -- --------------------------------------------------- -- " << std::endl;
-        }
-    }
-}
-
-void Shader::use() {
-    glUseProgram(programID);
-}
-
-void Shader::set(const std::string &name, bool value) const {
-    glUniform1i(glGetUniformLocation(programID, name.c_str()), (int) value);
-}
-
-void Shader::set(const std::string &name, int value) const {
-    glUniform1i(glGetUniformLocation(programID, name.c_str()), value);
-}
-
-void Shader::set(const std::string &name, float value) const {
-    glUniform1f(glGetUniformLocation(programID, name.c_str()), value);
-}
-
-void Shader::set(const std::string &name, const glm::vec2 &value) const {
-    glUniform2f(glGetUniformLocation(programID, name.c_str()), value.x, value.y);
-}
-
-void Shader::set(const std::string &name, const glm::vec4 &value) const {
-    glUniform4f(glGetUniformLocation(programID, name.c_str()), value.x, value.y, value.z, value.w);
+Shader::Shader(const GLchar *vertexPath, const GLchar *fragmentPath) : programID(0) {
+    load(vertexPath, fragmentPath);
 }

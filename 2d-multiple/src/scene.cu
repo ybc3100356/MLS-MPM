@@ -12,7 +12,7 @@ void Scene::update() {
     gpuUpdate();
 }
 
-const int blockNum = 32;
+const int blockNum = 128;
 const int threadNum = 128;
 constexpr Real e = 2.7182818284590452f;
 
@@ -30,10 +30,11 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
         grid.sync();
 
         // p2g
-        assert(Scene::numParticles % totalThreadNum == 0);
-        int pgRepeatTime = int(Scene::numParticles / totalThreadNum);
+//        assert(Scene::numParticles % totalThreadNum == 0);
+        int pgRepeatTime = int((Scene::numParticles - 1) / totalThreadNum) + 1;
         for (int i = 0; i < pgRepeatTime; i++) {
             size_t idx = threadId * pgRepeatTime + i;
+            if (idx > Scene::numParticles) continue;
             auto &p = particles[idx];
             auto base = (ivec2) (p.position * Scene::inv_dx - 0.5f);
             auto fx = (p.position * Scene::inv_dx) - (vec2) base;
@@ -155,6 +156,7 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
         // g2p
         for (int i = 0; i < pgRepeatTime; i++) {
             size_t idx = threadId * pgRepeatTime + i;
+            if (idx > Scene::numParticles) continue;
             auto base = (ivec2) (particles[idx].position * Scene::inv_dx - 0.5f);
             auto fx = (particles[idx].position * Scene::inv_dx) - (vec2) base;
             // quadratic B-spline weights

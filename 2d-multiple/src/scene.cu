@@ -12,24 +12,28 @@ void Scene::update() {
     gpuUpdate();
 }
 
-const int blockNum = 1;
+const int blockNum = 32;
 const int threadNum = 128;
 constexpr Real e = 2.7182818284590452f;
 
 __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
+    cooperative_groups::grid_group grid = cooperative_groups::this_grid();
+    int threadId = int(grid.thread_rank());
+    int totalThreadNum = int(grid.size());
+
     for (int step = 0; step < Scene::steps; step++) {
         // memset
-        if (threadIdx.x == 0) {
+        if (threadId == 0) {
             memset(grid_v, 0, Scene::grid_v_size);
             memset(grid_m, 0, Scene::grid_m_size);
         }
-        __syncthreads();
+        grid.sync();
+
         // p2g
-        const int totalThreadNum = threadNum * blockNum;
         assert(Scene::numParticles % totalThreadNum == 0);
-        int pgRepeatTime = Scene::numParticles / totalThreadNum;
+        int pgRepeatTime = int(Scene::numParticles / totalThreadNum);
         for (int i = 0; i < pgRepeatTime; i++) {
-            size_t idx = (threadIdx.x + blockIdx.x * blockDim.x) * pgRepeatTime + i;
+            size_t idx = threadId * pgRepeatTime + i;
             auto &p = particles[idx];
             auto base = (ivec2) (p.position * Scene::inv_dx - 0.5f);
             auto fx = (p.position * Scene::inv_dx) - (vec2) base;
@@ -122,13 +126,13 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
                 }
             }
         }
-        __syncthreads();
+        grid.sync();
 
         // grid
         assert((Scene::numGrid * Scene::numGrid) % totalThreadNum == 0);
-        int gridRepeatTime = (Scene::numGrid * Scene::numGrid) / totalThreadNum;
+        int gridRepeatTime = int((Scene::numGrid * Scene::numGrid) / totalThreadNum);
         for (int i = 0; i < gridRepeatTime; i++) {
-            size_t idx = (threadIdx.x + blockIdx.x * blockDim.x) * gridRepeatTime + i;
+            size_t idx = threadId * gridRepeatTime + i;
             if (grid_m[idx] > 0) {
                 auto inv_m = 1.0f / grid_m[idx];
                 grid_v[idx] = inv_m * grid_v[idx];
@@ -146,11 +150,11 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
                     grid_v[idx][1] = 0;
             }
         }
-        __syncthreads();
+        grid.sync();
 
         // g2p
         for (int i = 0; i < pgRepeatTime; i++) {
-            size_t idx = (threadIdx.x + blockIdx.x * blockDim.x) * pgRepeatTime + i;
+            size_t idx = threadId * pgRepeatTime + i;
             auto base = (ivec2) (particles[idx].position * Scene::inv_dx - 0.5f);
             auto fx = (particles[idx].position * Scene::inv_dx) - (vec2) base;
             // quadratic B-spline weights
@@ -177,7 +181,7 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
             particles[idx].Jp *= 1 + Scene::dt * (new_C[0][0] + new_C[1][1]); // trace -- scale of volume
             particles[idx].C = new_C;
         }
-        __syncthreads();
+        grid.sync();
     }
 }
 
@@ -195,8 +199,14 @@ void Scene::gpuFree() {
 
 void Scene::gpuUpdate() {
     cudaMemcpy(particles_gpu, &particles[0], particles_size, cudaMemcpyHostToDevice);
-    gpuCompute<<<blockNum, threadNum>>>(particles_gpu, grid_v_gpu, grid_m_gpu);
-    cudaError_t code = cudaPeekAtLastError();
+//    gpuCompute<<<blockNum, threadNum>>>(particles_gpu, grid_v_gpu, grid_m_gpu);
+//    cudaError_t code = cudaPeekAtLastError();
+    dim3 dimBlock(threadNum, 1, 1);
+    dim3 dimGrid(blockNum, 1, 1);
+    void *kernelArgs[] = {
+            (void *) &particles_gpu, (void *) &grid_v_gpu, (void *) &grid_m_gpu,
+    };
+    cudaError_t code = cudaLaunchCooperativeKernel((void *) gpuCompute, dimGrid, dimBlock, kernelArgs);
     if (code != cudaSuccess) {
         fprintf(stderr, "GPU assert: %s %s %d\n", cudaGetErrorString(code), __FILE__, __LINE__);
         exit(code);

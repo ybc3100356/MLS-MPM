@@ -16,10 +16,6 @@ const int blockNum = 1;
 const int threadNum = 128;
 
 __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
-//    if (threadIdx.x == 0) {
-//        printf("DEBUG\n");
-//        printf("%f\n", particles[0].position[0]);
-//    }
     for (int step = 0; step < 10; step++) {
         // memset
         if (threadIdx.x == 0) {
@@ -48,10 +44,12 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
                     auto dpos = ((vec2) offset - fx) * Scene::dx;
                     auto weight = w[i][0] * w[j][1];
                     auto index = base + offset;
-//                    assert (index[0] < Scene::numGrid && index[1] < Scene::numGrid);
                     if (!(index[0] < Scene::numGrid && index[1] < Scene::numGrid)) continue;
-                    grid_v[index[0] * Scene::numGrid + index[1]] += weight * (Scene::p_mass * particles[idx].velocity + affine * dpos);
-                    grid_m[index[0] * Scene::numGrid + index[1]] += weight * Scene::p_mass;
+                    auto dv = weight * (Scene::p_mass * particles[idx].velocity + affine * dpos);
+                    auto target_idx = index[0] * Scene::numGrid + index[1];
+                    atomicAdd(&(grid_v[target_idx][0]), dv[0]);
+                    atomicAdd(&(grid_v[target_idx][1]), dv[1]);
+                    atomicAdd(&(grid_m[target_idx]), weight * Scene::p_mass);
                 }
             }
         }
@@ -96,7 +94,6 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
                 for (int j = 0; j < 3; j++) {
                     auto offset = ivec2(i, j);
                     auto index = base + offset;
-//                    assert (index[0] < Scene::numGrid && index[1] < Scene::numGrid);
                     if (!(index[0] < Scene::numGrid && index[1] < Scene::numGrid)) continue;
                     auto weight = w[i][0] * w[j][1];
                     auto dpos = ((vec2) offset - fx) * Scene::dx;
@@ -113,9 +110,6 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
         }
         __syncthreads();
     }
-//    if (threadIdx.x == 0) {
-//        printf("%f\n", particles[0].position[0]);
-//    }
 }
 
 void Scene::gpuInit() {
@@ -136,7 +130,7 @@ void Scene::gpuUpdate() {
     cudaError_t code = cudaPeekAtLastError();
     if (code != cudaSuccess) {
         fprintf(stderr,"GPU assert: %s %s %d\n", cudaGetErrorString(code), __FILE__, __LINE__);
-        if (abort) exit(code);
+        exit(code);
     }
     cudaDeviceSynchronize();
     cudaMemcpy(&particles[0], particles_gpu, particles_size, cudaMemcpyDeviceToHost);

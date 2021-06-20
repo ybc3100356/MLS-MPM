@@ -36,14 +36,14 @@ public:
 
 private:
     vector<Particle> particles;
-    Particle *particles_gpu;
+    Particle *particles_gpu{};
     constexpr const static int particles_size = numParticles * sizeof(Particle);
 
     vector<vector<vec2>> grid_v;
-    vec2 *grid_v_gpu;
+    vec2 *grid_v_gpu{};
 
     vector<vector<Real>> grid_m;
-    Real *grid_m_gpu;
+    Real *grid_m_gpu{};
 
     void subStep();
 

@@ -4,9 +4,6 @@
 
 #include "scene.h"
 
-const unsigned int SCR_WIDTH = 1000;
-const unsigned int SCR_HEIGHT = 1000;
-
 static void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
@@ -16,7 +13,32 @@ static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
+static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
+    Scene::processMouseMovement(xpos, ypos);
+}
+
+void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        Scene::setMouse(1);
+    else
+        Scene::setMouse(0);
+}
+
+#include <cstdio>
+
+int test() {
+    mat2 A, U, S, V;
+    A = mat2(-3, 7, -12, -9);
+    svd(A, U, S, V);
+    printf("A=\n%f, %f,\n%f, %f\n\n", A[0][0], A[1][0], A[0][1], A[1][1]);
+    printf("U=\n%f, %f,\n%f, %f\n\n", U[0][0], U[1][0], U[0][1], U[1][1]);
+    printf("S=\n%f, %f,\n%f, %f\n\n", S[0][0], 0.0, 0.0, S[1][1]);
+    printf("V=\n%f, %f,\n%f, %f\n\n", V[0][0], V[1][0], V[0][1], V[1][1]);
+    exit(0);
+}
+
 int main() {
+//    test();
     // glfw: initialize and configure
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -33,6 +55,9 @@ int main() {
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+    glfwSetCursorPosCallback(window, mouse_callback);
+//    glfwSetScrollCallback(window, scroll_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
     // glad: load all OpenGL function pointers
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;

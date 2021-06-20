@@ -18,31 +18,36 @@
 
 using std::vector;
 
+const unsigned int SCR_WIDTH = 1000;
+const unsigned int SCR_HEIGHT = 1000;
+
 class Scene {
 public:
     const static size_t dim = 2;
-    const static size_t numParticlesPerObject = 8192 ;
+    const static size_t numParticlesPerObject = 8192;
     const static size_t numObject = 3;
     const static size_t numParticles = numParticlesPerObject * numObject;
     const static size_t numGrid = 256;
 
-    constexpr const static Real E = 5e3;
+    constexpr const static Real E = 3e3;
     constexpr const static Real nu = 0.2;
     constexpr const static Real mu_0 = E / (2.0f * (1.0f + nu));
     constexpr const static Real lambda_0 = E * nu / ((1.0f + nu) * (1.0f - 2.0f * nu)); // Lame parameters
-    constexpr const static Real dt = 2.0e-4;
+    constexpr const static Real dt = 3.0e-4;
     constexpr const static size_t steps = 25;
 
     constexpr const static Real dx = 1.0f / numGrid;
     constexpr const static Real inv_dx = 1.0f / dx;
-    constexpr const static Real p_vol = (dx * 0.5f) * (dx * 0.5f);
-    constexpr const static Real p_rho = 1;
+    constexpr const static Real p_vol = (dx * 0.3f) * (dx * 0.3f);
+    constexpr const static Real p_rho = 0.5;
     constexpr const static Real p_mass = p_vol * p_rho;
 
     constexpr const static int grid_v_size = numGrid * numGrid * sizeof(vec2);
     constexpr const static int grid_m_size = numGrid * numGrid * sizeof(Real);
 
 private:
+    static int onMouse;
+    static float mouseX, mouseY;
     vector<Particle> particles;
     Particle *particles_gpu{};
     constexpr const static int particles_size = numParticles * sizeof(Particle);
@@ -79,6 +84,11 @@ public:
     void g2p();
 
     void gridCompute();
+
+    static void setMouse(int press);
+
+    static void processMouseMovement(float x, float y);
+
 };
 
 

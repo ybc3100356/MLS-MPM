@@ -51,9 +51,6 @@ int main() {
         glfwPollEvents();
         processInput(window);
         scene.update();
-        if (deltaTime > scene.dt) {
-            deltaTime = 0;
-        }
         glClearColor(17 / 255., 47 / 255., 65 / 255., 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         scene.render();

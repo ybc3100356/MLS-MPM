@@ -26,12 +26,18 @@ public:
     const static size_t numParticles = numParticlesPerObject * numObject;
     const static size_t numGrid = 128;
 
+    constexpr const static Real E = 5e4;
+    constexpr const static Real nu = 0.2;
+    constexpr const static Real mu_0 = E / (2.0f * (1.0f + nu));
+    constexpr const static Real lambda_0 = E * nu / ((1.0f + nu) * (1.0f - 2.0f * nu)); // Lame parameters
+    constexpr const static Real dt = 3.0e-4;
+    constexpr const static size_t steps = 15;
+
     constexpr const static Real dx = 1.0f / numGrid;
     constexpr const static Real inv_dx = 1.0f / dx;
     constexpr const static Real p_vol = (dx * 0.5f) * (dx * 0.5f);
-    constexpr const static Real p_rho = 0.35;
+    constexpr const static Real p_rho = 1;
     constexpr const static Real p_mass = p_vol * p_rho;
-    constexpr const static Real E = 200;
 
     constexpr const static int grid_v_size = numGrid * numGrid * sizeof(vec2);
     constexpr const static int grid_m_size = numGrid * numGrid * sizeof(Real);
@@ -53,7 +59,6 @@ private:
     unsigned int VAO;
     Shader &shader;
 public:
-    constexpr static const Real dt = 2.0e-3;
 
     explicit Scene(const Shader &shader);
 

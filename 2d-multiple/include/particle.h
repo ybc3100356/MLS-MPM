@@ -28,10 +28,15 @@ public:
     vec2 velocity;
     mat2 F;
     mat2 C;
-    Real J;
+    Real Jp;
     vec4 color;
+    enum Material{
+        Liquid = 0,
+        Jelly = 1,
+        Snow = 2,
+    }material;
 
-    Particle(vec2 center, vec4 color);
+    Particle(vec2 center, vec4 color, Material material);
 };
 
 #endif //MLSMPM_PARTICLE_H

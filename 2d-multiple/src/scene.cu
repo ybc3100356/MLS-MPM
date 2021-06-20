@@ -142,8 +142,8 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m, floa
                 auto bound = 3;
                 size_t i = idx / Scene::numGrid;
                 size_t j = idx % Scene::numGrid;
-                vec2 dist = vec2(x / 1000, y / 1000) - Scene::dx * vec2(i, j);
-                vec2 dv = dist / (0.01f + sqrt(dist[0] * dist[0] + dist[1] * dist[1])) * (click ? 1.0f : 0.0f) *
+                vec2 dist = vec2(x / 1000, 1-y / 1000) - Scene::dx * vec2(i, j);
+                vec2 dv = dist / (0.01f + (dist[0] * dist[0] + dist[1] * dist[1])) * (click ? 1.0f : 0.0f) *
                           Scene::dt * 100.0f;
                 grid_v[idx][0] += dv[0];
                 grid_v[idx][1] += dv[1];

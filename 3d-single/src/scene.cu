@@ -6,15 +6,15 @@
 #include <cassert>
 #include <cooperative_groups.h>
 
-const int numBlock = 128;
-const int numThread = 4;
+const int numBlock = 256;
+const int numThread = 16;
 
 __global__ void gpuCompute(Particle *particles, vec3 *grid_v, Real *grid_m) {
     cooperative_groups::grid_group grid = cooperative_groups::this_grid();
     int threadId = int(grid.thread_rank());
     int totalThreadNum = int(grid.size());
 
-    for (int step = 0; step < 10; step++) {
+    for (int step = 0; step < Scene::steps; step++) {
         // has to memset on each iter start
         if (threadId == 0) {
             memset(grid_v, 0, Scene::grid_v_size);
@@ -53,10 +53,6 @@ __global__ void gpuCompute(Particle *particles, vec3 *grid_v, Real *grid_m) {
                         atomicAdd(&(grid_v[target_idx][1]), dv[1]);
                         atomicAdd(&(grid_v[target_idx][2]), dv[2]);
                         atomicAdd(&(grid_m[target_idx]), weight * Scene::p_mass);
-//                        grid_v[index[0] * Scene::numGrid * Scene::numGrid + index[1] * Scene::numGrid + index[2]] +=
-//                                weight * (Scene::p_mass * particles[idx].velocity + affine * dpos);
-//                        grid_m[index[0] * Scene::numGrid * Scene::numGrid + index[1] * Scene::numGrid + index[2]] +=
-//                                weight * Scene::p_mass;
                     }
                 }
             }
@@ -273,7 +269,6 @@ void Scene::render() {
         mat4 model = mat4(1.0f); // make sure to initialize matrix to identity matrix first
         model = glm::translate(model, particle.position);
         shader.set("model", model);
-//        shader.set("offset", glm::vec2(particle.position[0], particle.position[1]));
         shader.set("color", vec4(0, 0.5, 1, 1));
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
@@ -348,7 +343,7 @@ Scene::Scene() : VAO(0),
     glEnableVertexAttribArray(0);
     glBindVertexArray(0);
 
-    camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+    camera = Camera(glm::vec3(0.0f, 0.8f, 1.5f), glm::vec3(0.0f, 1.0f, 0.0f), -75, -30);
 }
 
 Scene::~Scene() {

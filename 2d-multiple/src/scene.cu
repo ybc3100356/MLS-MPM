@@ -15,6 +15,10 @@ void Scene::update() {
 const int blockNum = 1;
 const int threadNum = 128;
 
+inline Real determinant(const mat2 &mat) {
+    return mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0];
+}
+
 __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
     for (int step = 0; step < 10; step++) {
         // memset
@@ -36,6 +40,7 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
             vec2 w[] = {0.5f * ((1.5f - fx) * (1.5f - fx)),
                         0.75f - ((fx - 1.0f) * (fx - 1.0f)),
                         0.5f * (fx - 0.5f) * (fx - 0.5f)};
+//            Real J = determinant()
             Real stress = -Scene::dt * Scene::p_vol * (particles[idx].J - 1) * 4 * Scene::inv_dx * Scene::inv_dx * Scene::E;
             auto affine = mat2(vec2(stress, 0), vec2(0, stress)) + Scene::p_mass * particles[idx].C;
             for (int i = 0; i < 3; i++) {
@@ -146,7 +151,7 @@ void Scene::render() {
     shader.use();
     for (auto &particle : this->particles) {
         shader.set("offset", particle.position);
-        shader.set("color", vec4(0, 0.5, 1, 1));
+        shader.set("color", particle.color);
         glBindVertexArray(this->VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
@@ -155,8 +160,14 @@ void Scene::render() {
 
 Scene::Scene(const Shader &shader) : shader(const_cast<Shader &>(shader)), VAO(0),
                                      grid_v(vector<vector<vec2>>(numGrid, vector<vec2>(numGrid, vec2(0, 0)))),
-                                     grid_m(vector<vector<Real>>(numGrid, vector<Real>(numGrid, 0))),
-                                     particles(vector<Particle>(numParticles)) {
+                                     grid_m(vector<vector<Real>>(numGrid, vector<Real>(numGrid, 0))) {
+    for (int i = 0; i < numParticlesPerObject; i++)
+        particles.emplace_back(vec2(0.55, 0.45), vec4(237 / 255., 85 / 255., 59 / 255., 1));
+    for (int i = 0; i < numParticlesPerObject; i++)
+        particles.emplace_back(vec2(0.45, 0.65), vec4(242 / 255., 177 / 255., 52 / 255., 1));
+    for (int i = 0; i < numParticlesPerObject; i++)
+        particles.emplace_back(vec2(0.55, 0.85), vec4(6 / 255., 133 / 255., 135 / 255., 1));
+
     gpuInit();
 
     GLuint VBO;
@@ -183,7 +194,7 @@ Scene::Scene(const Shader &shader) : shader(const_cast<Shader &>(shader)), VAO(0
 }
 
 Scene::~Scene() {
-    glDeleteVertexArrays(1, &VAO);
+//    glDeleteVertexArrays(1, &VAO);
     gpuFree();
 }
 

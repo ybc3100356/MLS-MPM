@@ -26,10 +26,12 @@ class Particle {
 public:
     vec2 position;
     vec2 velocity;
+    mat2 F;
     mat2 C;
     Real J;
+    vec4 color;
 
-    Particle();
+    Particle(vec2 center, vec4 color);
 };
 
 #endif //MLSMPM_PARTICLE_H

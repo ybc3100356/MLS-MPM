@@ -5,6 +5,12 @@
 #include "particle.h"
 
 
-Particle::Particle() : position(random<Real>(0.2, 0.7), random<Real>(0.3, 0.9)), velocity(0,-1),
-                       J(1), C() {
+Particle::Particle(vec2 center, vec4 color) :
+        position(random<Real>(center[0] - 0.08, center[0] + 0.08),
+                 random<Real>(center[1] - 0.08, center[1] + 0.08)),
+        velocity(0, 0),
+        F(1),
+        C(0),
+        J(1),
+        color(color) {
 }

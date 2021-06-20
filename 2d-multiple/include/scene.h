@@ -21,7 +21,9 @@ using std::vector;
 class Scene {
 public:
     const static size_t dim = 2;
-    const static size_t numParticles = 8192 * 4;
+    const static size_t numParticlesPerObject = 8192;
+    const static size_t numObject = 3;
+    const static size_t numParticles = numParticlesPerObject * numObject;
     const static size_t numGrid = 128;
 
     constexpr const static Real dx = 1.0f / numGrid;

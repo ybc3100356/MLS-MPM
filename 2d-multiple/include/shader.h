@@ -19,7 +19,9 @@ public:
 
     Shader(const GLchar *vertexPath, const GLchar *fragmentPath);
 
-    ~Shader() { if (programID) glDeleteProgram(programID); }
+    ~Shader() {
+//        if (programID) glDeleteProgram(programID);
+    }
 
     void use();
 

@@ -44,7 +44,7 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
             p.F = (mat2(1) + Scene::dt * p.C) * p.F;
             Real h = max(0.1f, min(5.0f, pow(e, 10 * (1.0f - p.Jp)))); // hardness
             if (p.material == Particle::Jelly) {
-                h = 1;
+                h = 4;
             }
             Real mu = Scene::mu_0 * h;
             Real la = Scene::lambda_0 * h;
@@ -97,14 +97,14 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
             for (int d = 0; d < 2; d++) {
                 auto newSig = sig[d][d];
                 if (p.material == Particle::Snow) {
-                    newSig = min(max(sig[d][d], 1 - 2.5e-2f), 1 + 4.5e-3f);
+                    newSig = min(max(sig[d][d], 1 - 2.5e-2f), 1 + 1.5e-3f);
                 }
                 p.Jp *= sig[d][d] / newSig;
                 sig[d][d] = newSig;
                 J *= newSig;
             }
             if (p.material == Particle::Liquid) {
-                p.F  = mat2(1) * sqrt(J);
+                p.F = mat2(1) * sqrt(J);
             } else if (p.material == Particle::Snow) {
                 p.F = U * sig * transpose(V);
             }
@@ -136,7 +136,7 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
             if (grid_m[idx] > 0) {
                 auto inv_m = 1.0f / grid_m[idx];
                 grid_v[idx] = inv_m * grid_v[idx];
-                grid_v[idx][1] -= Scene::dt * 9.8;
+                grid_v[idx][1] -= Scene::dt * 30;
                 auto bound = 3;
                 size_t i = idx / Scene::numGrid;
                 size_t j = idx % Scene::numGrid;
@@ -177,9 +177,8 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
             }
 
             particles[idx].velocity = new_v;
-            particles[idx].position += particles[idx].velocity * Scene::dt; // boundary
-            particles[idx].Jp *= 1 + Scene::dt * (new_C[0][0] + new_C[1][1]); // trace -- scale of volume
             particles[idx].C = new_C;
+            particles[idx].position += particles[idx].velocity * Scene::dt; // boundary
         }
         grid.sync();
     }
@@ -240,10 +239,10 @@ Scene::Scene(const Shader &shader) : shader(const_cast<Shader &>(shader)), VAO(0
                                Particle::Jelly);
     for (int i = 0; i < numParticlesPerObject; i++)
         particles.emplace_back(vec2(0.45, 0.65), vec4(242 / 255., 177 / 255., 52 / 255., 1),
-                               Particle::Jelly);
+                               Particle::Liquid);
     for (int i = 0; i < numParticlesPerObject; i++)
         particles.emplace_back(vec2(0.55, 0.85), vec4(6 / 255., 133 / 255., 135 / 255., 1),
-                               Particle::Jelly);
+                               Particle::Snow);
 
     gpuInit();
 

@@ -10,5 +10,5 @@ void main()
 {
     float scale = 0.005f;
     ParticleColor = color;
-    gl_Position = vec4(((vertex.xy) * scale) + offset - vec2(1, 1), 0.0, 1.0);
+    gl_Position = vec4((2 * (((vertex.xy) * scale) + offset) - vec2(1, 1)), 0.0, 1.0);
 }

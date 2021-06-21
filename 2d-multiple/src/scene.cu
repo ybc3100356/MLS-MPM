@@ -13,7 +13,7 @@ void Scene::update() {
 }
 
 const int blockNum = 128;
-const int threadNum = 256;
+const int threadNum = 128;
 constexpr Real e = 2.7182818284590452f;
 
 __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m, float x, float y, bool click) {

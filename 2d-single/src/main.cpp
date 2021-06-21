@@ -4,8 +4,8 @@
 
 #include "scene.h"
 
-const unsigned int SCR_WIDTH = 1920;
-const unsigned int SCR_HEIGHT = 1080;
+const unsigned int SCR_WIDTH = 1000;
+const unsigned int SCR_HEIGHT = 1000;
 
 static void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -24,7 +24,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // glfw window creation
-    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "test window", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "MLS-MPM", nullptr, nullptr);
     if (window == nullptr) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -54,7 +54,7 @@ int main() {
         if (deltaTime > scene.dt) {
             deltaTime = 0;
         }
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(17 / 255., 47 / 255., 65 / 255., 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         scene.render();
         glfwSwapBuffers(window);

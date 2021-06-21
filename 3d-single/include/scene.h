@@ -14,8 +14,8 @@
 
 #include <vector>
 
-const unsigned int SCR_WIDTH = 1920;
-const unsigned int SCR_HEIGHT = 1080;
+const unsigned int SCR_WIDTH = 1000;
+const unsigned int SCR_HEIGHT = 1000;
 using std::vector;
 
 class Scene {
@@ -27,7 +27,7 @@ public:
 
     static const size_t dim = 3;
     static const size_t numParticles = 8192 * 4;
-    static const size_t numGrid = 48;
+    static const size_t numGrid = 64;
     static const size_t steps = 10;
 
     constexpr static const Real dt = 4.0e-3;

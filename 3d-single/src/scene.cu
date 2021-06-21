@@ -6,8 +6,8 @@
 #include <cassert>
 #include <cooperative_groups.h>
 
-const int numBlock = 256;
-const int numThread = 16;
+const int numBlock = 128;
+const int numThread = 128;
 
 __global__ void gpuCompute(Particle *particles, vec3 *grid_v, Real *grid_m) {
     cooperative_groups::grid_group grid = cooperative_groups::this_grid();
@@ -23,10 +23,11 @@ __global__ void gpuCompute(Particle *particles, vec3 *grid_v, Real *grid_m) {
         grid.sync();
 
         // p2g
-        assert(Scene::numParticles % totalThreadNum == 0);
+//        assert(Scene::numParticles % totalThreadNum == 0);
         int pgRepeatTime = int(Scene::numParticles / totalThreadNum);
         for (int i = 0; i < pgRepeatTime; i++) {
             size_t idx = threadId * pgRepeatTime + i;
+            if (idx > Scene::numParticles) continue;
             auto base = (ivec3) (particles[idx].position * Scene::inv_dx - 0.5f);
             auto fx = (particles[idx].position * Scene::inv_dx) - (vec3) base;
             // quadratic B-spline weights
@@ -95,6 +96,7 @@ __global__ void gpuCompute(Particle *particles, vec3 *grid_v, Real *grid_m) {
         // g2p
         for (int i = 0; i < pgRepeatTime; i++) {
             size_t idx = threadId * pgRepeatTime + i;
+            if (idx > Scene::numParticles) continue;
             auto base = (ivec3) (particles[idx].position * Scene::inv_dx - 0.5f);
             auto fx = (particles[idx].position * Scene::inv_dx) - (vec3) base;
             // quadratic B-spline weights
@@ -343,7 +345,7 @@ Scene::Scene() : VAO(0),
     glEnableVertexAttribArray(0);
     glBindVertexArray(0);
 
-    camera = Camera(glm::vec3(0.0f, 0.8f, 1.5f), glm::vec3(0.0f, 1.0f, 0.0f), -75, -30);
+    camera = Camera(glm::vec3(0.25f, 0.9f, 1.7f), glm::vec3(0.0f, 1.0f, 0.0f), -75, -30);
 }
 
 Scene::~Scene() {

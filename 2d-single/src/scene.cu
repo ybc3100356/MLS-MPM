@@ -16,7 +16,7 @@ const int blockNum = 1;
 const int threadNum = 128;
 
 __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
-    for (int step = 0; step < 10; step++) {
+    for (int step = 0; step < 25; step++) {
         // memset
         if (threadIdx.x == 0) {
             memset(grid_v, 0, Scene::grid_v_size);
@@ -99,7 +99,7 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m) {
                     auto dpos = ((vec2) offset - fx) * Scene::dx;
                     auto g_v = grid_v[index[0] * Scene::numGrid + index[1]];
                     new_v += weight * g_v;
-                    new_C += 4 * weight * outerProduct(g_v, dpos) * Scene::inv_dx;
+                    new_C += 4 * weight * outerProduct(g_v, dpos) * Scene::inv_dx * Scene::inv_dx;
                 }
             }
 

@@ -30,7 +30,7 @@ public:
     static const size_t numGrid = 64;
     static const size_t steps = 10;
 
-    constexpr static const Real dt = 4.0e-3;
+    constexpr static const Real dt = 1.0e-3;
     constexpr static const Real dx = 1.0f / numGrid;
     constexpr static const Real inv_dx = 1.0f / dx;
     constexpr static const Real p_vol = (dx * 2.0f) * (dx * 2.0f);

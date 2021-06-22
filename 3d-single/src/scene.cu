@@ -114,7 +114,7 @@ __global__ void gpuCompute(Particle *particles, vec3 *grid_v, Real *grid_m) {
                               index[2] < Scene::numGrid))
                             continue;
                         auto weight = w[i][0] * w[j][1] * w[k][2];
-                        auto dpos = ((vec3) offset - fx) * Scene::dx;
+                        auto dpos = ((vec3) offset - fx);
                         auto g_v = grid_v[index[0] * Scene::numGrid * Scene::numGrid + index[1] * Scene::numGrid + index[2]];
                         new_v += weight * g_v;
                         new_C += 4 * weight * outerProduct(g_v, dpos) * Scene::inv_dx;

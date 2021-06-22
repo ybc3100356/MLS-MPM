@@ -16,7 +16,7 @@ const int blockNum = 128;
 const int threadNum = 128;
 constexpr Real e = 2.7182818284590452f;
 
-__global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m, float x, float y, bool click) {
+__global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m, float mouseX, float mouseY, bool click) {
     cooperative_groups::grid_group grid = cooperative_groups::this_grid();
     int threadId = int(grid.thread_rank());
     int totalThreadNum = int(grid.size());
@@ -43,9 +43,9 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m, floa
                         0.75f - ((fx - 1.0f) * (fx - 1.0f)),
                         0.5f * (fx - 0.5f) * (fx - 0.5f)};
             p.F = (mat2(1) + Scene::dt * p.C) * p.F;
-            Real h = max(0.1f, min(5.0f, pow(e, 10 * (1.0f - p.Jp)))); // hardness
+            Real h = max(0.1f, min(5.0f, exp( 10 * (1.0f - p.Jp)))); // hardness
             if (p.material == Particle::Jelly) {
-                h = 4;
+                h = 0.3;
             }
             Real mu = Scene::mu_0 * h;
             Real la = Scene::lambda_0 * h;
@@ -98,7 +98,7 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m, floa
             for (int d = 0; d < 2; d++) {
                 auto newSig = sig[d][d];
                 if (p.material == Particle::Snow) {
-                    newSig = min(max(sig[d][d], 1 - 2.5e-2f), 1 + 1.5e-3f);
+                    newSig = min(max(sig[d][d], 1 - 2.5e-2f), 1 + 4.5e-3f);
                 }
                 p.Jp *= sig[d][d] / newSig;
                 sig[d][d] = newSig;
@@ -137,13 +137,13 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m, floa
             if (grid_m[idx] > 0) {
                 auto inv_m = 1.0f / grid_m[idx];
                 grid_v[idx] = inv_m * grid_v[idx];
-                grid_v[idx][1] -= Scene::dt * 10 * (click ? 0.0f : 1.0f);
+                grid_v[idx][1] -= Scene::dt * 10 * (float)(1-click);
 
                 auto bound = 3;
                 size_t i = idx / Scene::numGrid;
                 size_t j = idx % Scene::numGrid;
-                vec2 dist = vec2(x / 1000, 1-y / 1000) - Scene::dx * vec2(i, j);
-                vec2 dv = dist / (0.01f + (dist[0] * dist[0] + dist[1] * dist[1])) * (click ? 1.0f : 0.0f) *
+                vec2 dist = vec2(mouseX / 1000, 1 - mouseY / 1000) - Scene::dx * vec2(i, j);
+                vec2 dv = dist / (0.01f + sqrt(dist[0] * dist[0] + dist[1] * dist[1])) * (float)(click) *
                           Scene::dt * 100.0f;
                 grid_v[idx][0] += dv[0];
                 grid_v[idx][1] += dv[1];
@@ -177,10 +177,10 @@ __global__ void gpuCompute(Particle *particles, vec2 *grid_v, Real *grid_m, floa
                     auto index = base + offset;
                     if (!(index[0] < Scene::numGrid && index[1] < Scene::numGrid)) continue;
                     auto weight = w[i][0] * w[j][1];
-                    auto dpos = ((vec2) offset - fx) * Scene::dx;
+                    auto dpos = ((vec2) offset - fx);
                     auto g_v = grid_v[index[0] * Scene::numGrid + index[1]];
                     new_v += weight * g_v;
-                    new_C += 4 * weight * outerProduct(g_v, dpos) * Scene::inv_dx;
+                    new_C += 4 * weight * outerProduct(g_v, dpos) * Scene::inv_dx ;
                 }
             }
 
@@ -248,10 +248,10 @@ Scene::Scene(const Shader &shader) : shader(const_cast<Shader &>(shader)), VAO(0
                                Particle::Jelly);
     for (int i = 0; i < numParticlesPerObject; i++)
         particles.emplace_back(vec2(0.45, 0.65), vec4(242 / 255., 177 / 255., 52 / 255., 1),
-                               Particle::Liquid);
+                               Particle::Snow);
     for (int i = 0; i < numParticlesPerObject; i++)
         particles.emplace_back(vec2(0.55, 0.85), vec4(6 / 255., 133 / 255., 135 / 255., 1),
-                               Particle::Snow);
+                               Particle::Liquid);
 
     gpuInit();
 

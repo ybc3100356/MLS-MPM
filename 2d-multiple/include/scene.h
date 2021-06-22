@@ -27,13 +27,13 @@ public:
     const static size_t numParticlesPerObject = 8192;
     const static size_t numObject = 3;
     const static size_t numParticles = numParticlesPerObject * numObject;
-    const static size_t numGrid = 256;
+    const static size_t numGrid = 128;
 
-    constexpr const static Real E = 3e3;
+    constexpr const static Real E = 5e3;
     constexpr const static Real nu = 0.2;
     constexpr const static Real mu_0 = E / (2.0f * (1.0f + nu));
     constexpr const static Real lambda_0 = E * nu / ((1.0f + nu) * (1.0f - 2.0f * nu)); // Lame parameters
-    constexpr const static Real dt = 3.0e-4;
+    constexpr const static Real dt = 1.0e-4;
     constexpr const static size_t steps = 25;
 
     constexpr const static Real dx = 1.0f / numGrid;

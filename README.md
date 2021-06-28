@@ -6,7 +6,7 @@ This is the repo for our implementation of the paper A Moving Least Squares Mate
 
 ## Build
 
-The code is tested on RTX2060 and RTX 3060 Ti with real-time performance on Linux.
+The code is tested on RTX 2060 and RTX 3070 with real-time performance on Linux.
 
 Our implemenation uses CUDA to make the simulation real-time. Please make sure you have CUDA SDK installed.
 

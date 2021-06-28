@@ -13,8 +13,10 @@ Our implemenation uses CUDA to make the simulation real-time. Please make sure y
 Entering any of the projects below, you can build them easily using CMake.
 
 ```bash
-cmake .
-make .
+mkdir build
+cd build
+cmake ..
+make -j8
 ```
 
 ## Run

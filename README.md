@@ -1,4 +1,4 @@
-# acg-mls-mpm
+# MLS-MPM
 
 This is the repo for our implementation of the paper A Moving Least Squares Material Point Method with Displacement Discontinuity and Two-Way Rigid Body Coupling, ACM Transactions on Graphics (SIGGRAPH 2018).
 
